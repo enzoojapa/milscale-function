@@ -1,0 +1,22 @@
+{
+  "name": "milscale-function",
+  "version": "1.0.0",
+  "description": "MilScale - Azure Functions (calculo do ciclo e consumo de eventos)",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "func start",
+    "test": "jest"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@azure/functions": "^4.17.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^26.6.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.15",
+    "typescript": "5.9"
+  }
+}
