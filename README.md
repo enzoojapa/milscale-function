@@ -46,7 +46,7 @@ npm test
 
 ## Links
 
-- Function: _LINK_FUNCTION_
+- Function: https://func-milscale-enzo.azurewebsites.net/api/ciclo?efetivoApto=24&necessidadeDiaria=4
 
 ## Projetos do sistema
 
