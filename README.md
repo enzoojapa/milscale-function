@@ -1,68 +1,25 @@
 # MilScale - Azure Function
 
-Funções serverless do MilScale:
+Aqui ficam as funções serverless do MilScale, que rodam no Azure Functions.
 
-| Função | Gatilho | Descrição |
-|---|---|---|
-| calcular-ciclo | HTTP (`GET/POST /api/ciclo`) | Calcula o ciclo de serviço: efetivo apto ÷ necessidade diária de postos |
-| notificar-escala | Service Bus (fila `escala-eventos`) | Consome `EscalaPublicada` e `TrocaAprovada` e gera as notificações para os militares |
-| health | HTTP (`GET /api/health`) | Status |
+A `calcular-ciclo` tem gatilho HTTP e calcula o ciclo de serviço, que é o efetivo apto dividido pela quantidade de postos por dia. Por exemplo, `GET /api/ciclo?efetivoApto=24&necessidadeDiaria=4` devolve um ciclo de 6 dias, ou seja, 5 dias de folga entre um serviço e outro. Se tiver menos gente apta do que postos, ela avisa que o efetivo é insuficiente. Quem chama essa função é o BFF, na montagem do painel.
 
-Exemplo: `GET /api/ciclo?efetivoApto=24&necessidadeDiaria=4` retorna ciclo de 6 dias (5 de folga entre serviços).
+A `notificar-escala` tem gatilho de mensagem e fica escutando a fila `escala-eventos` do Azure Service Bus. Toda vez que o serviço de escalas publica uma escala ou aprova uma troca, chega uma mensagem e ela gera a notificação pros militares envolvidos. Também tem uma `health` só pra checar se está no ar.
 
-## Arquitetura
+A regra do ciclo e a montagem das notificações ficam em `src/domain`, sem nada do Azure. Em `src/application` ficam os handlers e em `src/functions` cada gatilho em um arquivo, no modelo de programação v4. Os testes unitários cobrem o cálculo e as notificações, e o teste de arquitetura garante que o domínio e a aplicação não dependem do SDK do Azure Functions.
 
-```
-Usuário -> Microfrontend (React) -> API Gateway (AWS) -> BFF (Node.js)
-                                                         |-> Efetivo Service -> MongoDB Atlas
-                                                         |-> Escala Service  -> Azure SQL
-                                                         |                   -> Azure Service Bus -> Function (notificar-escala)
-                                                         |-> Azure Function (calcular-ciclo)
-```
+Foi feito em Node.js 22 com TypeScript, Azure Functions v4, Service Bus e Jest.
 
-```
-src/
-  domain/        cálculo do ciclo e montagem das notificações (sem dependência do Azure)
-  application/   handlers usados pelos gatilhos
-  functions/     um gatilho por arquivo (modelo de programação v4)
-tests/
-  unit/          ciclo, notificações e handlers
-  architecture/  domain e application não dependem do SDK @azure/functions
-```
-
-## Tecnologias
-
-Azure Functions v4 (Node.js 22), TypeScript, Azure Service Bus, Jest.
-
-## Como rodar localmente
+Pra rodar localmente precisa do Azure Functions Core Tools e da connection string do Service Bus no `local.settings.json`:
 
 ```bash
 npm install
-cp local.settings.example.json local.settings.json   # ServiceBusConnection
+cp local.settings.example.json local.settings.json
 npm run build
-func start      # requer Azure Functions Core Tools
+func start
 npm test
 ```
 
-## Links
+A função publicada pode ser testada em https://func-milscale-enzo.azurewebsites.net/api/ciclo?efetivoApto=24&necessidadeDiaria=4. Os outros repositórios do projeto são o frontend (https://github.com/enzoojapa/milscale-frontend), o BFF (https://github.com/enzoojapa/milscale-bff), o serviço de efetivo (https://github.com/enzoojapa/milscale-efetivo-service) e o serviço de escalas (https://github.com/enzoojapa/milscale-escala-service).
 
-- Function: https://func-milscale-enzo.azurewebsites.net/api/ciclo?efetivoApto=24&necessidadeDiaria=4
-
-## Projetos do sistema
-
-| Componente | Repositório |
-|---|---|
-| Microfrontend (React) | [milscale-frontend](https://github.com/enzoojapa/milscale-frontend) |
-| BFF (Node.js) | [milscale-bff](https://github.com/enzoojapa/milscale-bff) |
-| Microsserviço de efetivo (MongoDB) | [milscale-efetivo-service](https://github.com/enzoojapa/milscale-efetivo-service) |
-| Microsserviço de escalas (Azure SQL) | [milscale-escala-service](https://github.com/enzoojapa/milscale-escala-service) |
-| Azure Function | [milscale-function](https://github.com/enzoojapa/milscale-function) |
-
-## Alunos
-
-- Enzo Watanabe de Lima
-- João Guilherme Salomão
-- João Guilherme Cordeiro
-- Rafael Zeni Simião
-
-PUCPR - Engenharia de Software - Arquitetura e Soluções Cloud (2026/2)
+Trabalho feito por Enzo Watanabe de Lima, João Guilherme Salomão, João Guilherme Cordeiro e Rafael Zeni Simião, para a disciplina de Arquitetura e Soluções Cloud da PUCPR (2026/2).
